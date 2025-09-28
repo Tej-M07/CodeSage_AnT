@@ -1,4 +1,4 @@
-******USE CHROME WHILE RUNNING THIS WEBAPP *************************
+******USE CHROME WHILE RUNNING THIS WEBAPP *******
 Key highlights of the README:
 🚀 Project Description
 
