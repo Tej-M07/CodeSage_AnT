@@ -184,6 +184,109 @@ source venv/bin/activate
 venv\Scripts\activate
 ```
 
+Here are the exact commands to create a virtual environment (venv) for your CodeSage project:
+
+## *Step-by-Step Virtual Environment Setup*
+
+### *a. Create Virtual Environment*
+bash
+# Navigate to your project directory first
+cd /path/to/your/codesage/project
+
+# Create virtual environment named 'venv'
+python -m venv venv
+
+
+### *b. Activate Virtual Environment*
+
+*On Linux/Mac (including your Kali Linux):*
+bash
+source venv/bin/activate
+
+
+*On Windows:*
+bash
+venv\Scripts\activate
+
+
+### *c. Install Dependencies*
+bash
+# After activation, install all required packages
+pip install flask flask-socketio flask-cors google-generativeai PyPDF2
+
+
+### *d. Verify Installation*
+bash
+# Check installed packages
+pip list
+
+
+### *e. Run Your Application*
+bash
+# Start the CodeSage server
+python app.py
+
+
+***
+
+## *Complete One-Line Setup Command*
+
+For your Kali Linux system, you can run this all at once:
+
+bash
+python -m venv venv && source venv/bin/activate && pip install flask flask-socketio flask-cors google-generativeai PyPDF2 && python app.py
+
+
+***
+
+## *What This Creates*
+
+After running python -m venv venv, you'll see:
+
+your-project/
+├── venv/                 # Virtual environment folder
+│   ├── bin/             # Executables (Linux/Mac)
+│   ├── include/         # Header files
+│   ├── lib/             # Python packages
+│   └── pyvenv.cfg       # Configuration
+├── app.py               # Your Flask app
+├── index.html           # Your frontend
+└── README.md            # Documentation
+
+
+***
+
+## *Daily Usage*
+
+*To activate venv (every time you work on project):*
+bash
+source venv/bin/activate
+
+
+*To deactivate venv (when done):*
+bash
+deactivate
+
+
+*To run your app (after activation):*
+bash
+python app.py
+
+
+***
+
+## *Why Use Virtual Environment?*
+
+- *Isolation*: Keeps project dependencies separate from system Python
+- *Version Control*: Different projects can use different package versions
+- *Clean Installation*: Avoid conflicts between different Python projects
+- *Portability*: Easy to recreate the same environment on different machines
+
+The virtual environment ensures your CodeSage project runs with the exact package versions it needs without affecting your system's Python installation.[1][2]
+
+[1](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/51841150/4aaf71cd-4110-495c-a028-8bd8a948a253/index.html)
+[2](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/51841150/f76ae280-0cf2-463e-a968-906c6fc109ea/app.py)
+
 ### **Step 2: Install Dependencies**
 ```bash
 # Core Python libraries
