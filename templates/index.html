@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 CodeSage - AI Technical Interviewer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007acc;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --dark-bg: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --border-color: #404040;
+        }
+        
+        body { 
+            background: var(--dark-bg); 
+            color: #ffffff; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), #005a9e);
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 600;
+        }
+        
+        .resume-card {
+            background: #2a2a3a;
+            border: 1px solid #4a4a5a;
+        }
+        
+        .resume-card .card-header {
+            background: linear-gradient(135deg, #6f42c1, #5a359a);
+        }
+        
+        .analysis-panel {
+            background: #252535;
+            border: 1px solid #3a3a4a;
+            min-height: 200px;
+        }
+        
+        .execution-panel {
+            background: #1e1e2e;
+            border: 1px solid #2a2a3a;
+        }
+        
+        .btn-primary { 
+            background: linear-gradient(135deg, var(--primary-color), #005a9e);
+            border: none;
+            font-weight: 500;
+        }
+        
+        .btn-success { 
+            background: linear-gradient(135deg, var(--success-color), #1e7e34);
+            border: none;
+        }
+        
+        .btn-warning { 
+            background: linear-gradient(135deg, var(--warning-color), #e0a800);
+            border: none;
+            color: #000;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-color), #bd2130);
+            border: none;
+        }
+        
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            border: none;
+        }
+        
+        #editor { 
+            height: 450px; 
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        
+        .chat-messages { 
+            max-height: 280px; 
+            overflow-y: auto; 
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        .message { 
+            margin: 10px 0; 
+            padding: 12px; 
+            border-radius: 16px;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        
+        .user-message { 
+            background: linear-gradient(135deg, var(--primary-color), #005a9e);
+            color: white; 
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .ai-message { 
+            background: linear-gradient(135deg, #495057, #343a40);
+            color: white;
+            margin-right: auto;
+        }
+        
+        .resume-summary {
+            background: linear-gradient(135deg, #20c997, #17a2b8);
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+        }
+        
+        .complexity-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .complexity-o1 { background: #28a745; }
+        .complexity-on { background: #ffc107; color: #000; }
+        .complexity-on2 { background: #dc3545; }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+        }
+        
+        .form-control {
+            background: #3a3a4a;
+            border: 1px solid #4a4a5a;
+            color: white;
+        }
+        
+        .form-control:focus {
+            background: #4a4a5a;
+            border-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 0 0 0.2rem rgba(0, 122, 204, 0.25);
+        }
+        
+        .spinner-border-custom {
+            width: 1rem;
+            height: 1rem;
+            border-width: 0.15em;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .glow {
+            box-shadow: 0 0 15px rgba(0, 122, 204, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark bg-dark shadow-lg">
+        <div class="container-fluid">
+            <span class="navbar-brand">
+                <i class="fas fa-robot me-2"></i>
+                CodeSage - AI Technical Interviewer
+            </span>
+            <div class="d-flex align-items-center">
+                <span class="badge bg-success me-2">
+                    <i class="fas fa-brain me-1"></i>Gemini AI
+                </span>
+                <span id="progressIndicator" class="badge bg-primary" style="display: none;">
+                    Question <span id="currentQ">1</span> of <span id="totalQ">4</span>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-3">
+        <!-- Resume Upload Section -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card resume-card fade-in">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-file-upload me-2"></i>
+                            Resume Upload & AI Analysis
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <input type="file" id="resumeFile" class="form-control" accept=".pdf,.txt,.docx">
+                                    <div class="form-text text-light">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Upload PDF, TXT, or DOCX resume for personalized interview
+                                    </div>
+                                </div>
+                                <button id="uploadBtn" class="btn btn-info">
+                                    <i class="fas fa-magic me-2"></i>Analyze Resume
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <div id="resumeSummary" class="resume-summary" style="display: none;">
+                                    <h6><i class="fas fa-user-tie me-2"></i>Candidate Profile:</h6>
+                                    <div id="profileText">Upload resume to see AI analysis...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Problem Statement -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card fade-in">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0" id="problemTitle">
+                            <i class="fas fa-code me-2"></i>{{ problem.title }}
+                        </h4>
+                        <div class="progress" style="width: 200px; height: 8px;">
+                            <div id="interviewProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <pre id="problemDescription" class="text-light" style="white-space: pre-wrap;">{{ problem.description }}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Interface -->
+        <div class="row">
+            <!-- Left Side - Code Editor -->
+            <div class="col-lg-8">
+                <div class="card fade-in">
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-laptop-code me-2"></i>Code Editor
+                                </h5>
+                            </div>
+                            <div class="col-auto">
+                                <div class="btn-group" role="group">
+    <button id="runBtn" class="btn btn-primary btn-sm">
+        <i class="fas fa-play me-1"></i>Run
+    </button>
+    <button id="hintBtn" class="btn btn-warning btn-sm">
+        <i class="fas fa-lightbulb me-1"></i>Hint
+    </button>
+    <button id="analyzeBtn" class="btn btn-success btn-sm">
+        <i class="fas fa-search me-1"></i>Analyze
+    </button>
+    <button id="submitBtn" class="btn btn-danger btn-sm">
+        <i class="fas fa-check me-1"></i>Submit
+    </button>
+    <!-- NEW VOICE BUTTONS -->
+    <button id="startVoiceBtn" class="btn btn-info btn-sm">
+        <i class="fas fa-microphone me-1"></i>Voice
+    </button>
+<button id="stopVoiceBtn" class="btn btn-secondary btn-sm" style="display: none;">
+    <i class="fas fa-microphone-slash me-1"></i>Stop
+</button>
+<!-- TEST SPEECH BUTTON (NEW) -->
+<button id="testSpeechBtn" class="btn btn-outline-info btn-sm">
+    <i class="fas fa-volume-up me-1"></i>Test Speech
+</button>
+</div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="editor"></div>
+                    </div>
+                </div>
+                                </div>
+            </div>
+
+            <!-- Voice Status Indicator (NEW) -->
+            <div id="voiceStatus" class="mt-2" style="display: none;">
+                <div class="alert alert-success d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    <span><i class="fas fa-microphone me-2"></i>Listening... Speak your thoughts while coding!</span>
+                </div>
+            </div>
+
+            <!-- Execution Results -->
+
+
+                <!-- Execution Results -->
+                <div class="card mt-3 execution-panel fade-in">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-terminal me-2"></i>Execution Results
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <pre id="executionOutput" class="text-success mb-0" style="min-height: 80px;">Ready to execute code...</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side - Analysis and Chat -->
+            <div class="col-lg-4">
+                <!-- Real-time Analysis -->
+                <div class="card analysis-panel mb-3 fade-in">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Live Code Analysis
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="complexityDisplay">
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <strong>Syntax:</strong>
+                                </div>
+                                <div class="col-6">
+                                    <span id="syntax" class="badge bg-secondary">Ready</span>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <strong>Complexity:</strong>
+                                </div>
+                                <div class="col-6">
+                                    <span id="complexity" class="complexity-badge complexity-o1">O(1)</span>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-12">
+                                    <small id="details" class="text-muted">No code yet</small>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <small id="warning" class="text-warning"></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Chat -->
+                <div class="card fade-in">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-comments me-2"></i>AI Interview Chat
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="chatMessages" class="chat-messages mb-3"></div>
+                        <div class="input-group">
+                            <input type="text" id="chatInput" class="form-control" placeholder="Ask CodeSage anything...">
+                            <button id="sendBtn" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-body text-center py-4">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <h5 id="loadingText">Analyzing resume with Gemini AI...</h5>
+                    <p class="text-muted">This may take a few moments</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+    
+    <script>
+        let editor;
+        let socket = io();
+        let candidateProfile = null;
+        let currentProblem = null;
+        let interviewProgress = { current: 0, total: 4 };
+
+        // Initialize Monaco Editor
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
+        require(['vs/editor/editor.main'], function () {
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: `{{ problem.template }}`,
+                language: 'python',
+                theme: 'vs-dark',
+                fontSize: 14,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                wordWrap: 'on'
+            });
+
+            // Real-time analysis on code change
+            let debounceTimer;
+            editor.onDidChangeModelContent(() => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    const code = editor.getValue();
+                    socket.emit('code_change', { code: code });
+                }, 300);
+            });
+        });
+
+        // Socket events
+        socket.on('analysis_update', function(data) {
+            updateComplexityDisplay(data);
+        });
+
+        function updateComplexityDisplay(data) {
+            document.getElementById('syntax').textContent = data.syntax || 'Unknown';
+            document.getElementById('syntax').className = data.syntax.includes('✅') ? 'badge bg-success' : 'badge bg-danger';
+            
+            const complexity = data.complexity || 'O(1)';
+            const complexityEl = document.getElementById('complexity');
+            complexityEl.textContent = complexity;
+            
+            // Update complexity badge color
+            complexityEl.className = 'complexity-badge ';
+            if (complexity === 'O(1)') complexityEl.className += 'complexity-o1';
+            else if (complexity === 'O(n)') complexityEl.className += 'complexity-on';
+            else complexityEl.className += 'complexity-on2';
+            
+            document.getElementById('details').textContent = data.details || 'No analysis';
+            document.getElementById('warning').textContent = data.warning || '';
+        }
+
+        // Resume Upload Handler
+        document.getElementById('uploadBtn').addEventListener('click', async () => {
+            const fileInput = document.getElementById('resumeFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showAlert('Please select a resume file first!', 'warning');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('resume', file);
+
+            showLoading('Analyzing resume with Gemini AI...');
+
+            try {
+                const response = await fetch('/api/analyze-resume', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                hideLoading();
+                
+                if (result.success) {
+                    candidateProfile = result.profile;
+                    
+                    // Update UI with profile
+                    document.getElementById('resumeSummary').style.display = 'block';
+                    document.getElementById('profileText').innerHTML = result.summary;
+                    
+                    // Update problem if personalized
+                    if (result.personalized_problem) {
+                        updateProblem(result.personalized_problem);
+                    }
+                    
+                    // Update progress
+                    if (result.progress) {
+                        updateProgress(result.progress);
+                    }
+                    
+                    // Add welcome message
+                    addMessage('ai', result.welcome_message);
+                    
+                    // Add glow effect
+                    document.getElementById('resumeSummary').classList.add('glow');
+                    setTimeout(() => {
+                        document.getElementById('resumeSummary').classList.remove('glow');
+                    }, 2000);
+                    
+                } else {
+                    showAlert('Error analyzing resume: ' + result.error, 'danger');
+                }
+            } catch (error) {
+                hideLoading();
+                showAlert('Upload error: ' + error.message, 'danger');
+            }
+        });
+
+        // Button handlers
+        document.getElementById('runBtn').addEventListener('click', async () => {
+            const code = editor.getValue();
+            setButtonLoading('runBtn', true);
+            
+            try {
+                const response = await fetch('/api/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                });
+                const result = await response.json();
+                
+                const output = document.getElementById('executionOutput');
+                output.textContent = result.output;
+                output.className = result.success ? 'text-success mb-0' : 'text-danger mb-0';
+            } catch (error) {
+                document.getElementById('executionOutput').textContent = 'Execution error: ' + error.message;
+                document.getElementById('executionOutput').className = 'text-danger mb-0';
+            }
+            
+            setButtonLoading('runBtn', false);
+        });
+
+        document.getElementById('hintBtn').addEventListener('click', async () => {
+            await getAIAnalysis('hint');
+        });
+
+        document.getElementById('analyzeBtn').addEventListener('click', async () => {
+            await getAIAnalysis('feedback');
+        });
+
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            await getAIAnalysis('general');
+            
+            // Try to get next question
+            try {
+                const response = await fetch('/api/next-question', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ response: 'Solution submitted' })
+                });
+                const result = await response.json();
+                
+                if (result.interview_complete) {
+                    addMessage('ai', result.message);
+                    showAlert('Interview completed! 🎉', 'success');
+                } else if (result.success) {
+                    // Update to next question
+                    if (result.problem) {
+                        updateProblem(result.problem);
+                    }
+                    if (result.progress) {
+                        updateProgress(result.progress);
+                    }
+                    addMessage('ai', `Great! Let's move to the next question. This is question ${result.progress.current} of ${result.progress.total}.`);
+                }
+            } catch (error) {
+                addMessage('ai', '🎉 Solution submitted! Great work!');
+            }
+        });
+
+        async function getAIAnalysis(type) {
+            const code = editor.getValue();
+            setButtonLoading(type === 'hint' ? 'hintBtn' : 'analyzeBtn', true);
+            
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        code: code, 
+                        type: type,
+                        profile: candidateProfile
+                    })
+                });
+                const result = await response.json();
+                
+                // Update complexity display
+                if (result.complexity) {
+                    updateComplexityDisplay(result.complexity);
+                }
+                
+                // Add AI analysis to chat
+                addMessage('ai', result.ai_analysis);
+            } catch (error) {
+                addMessage('ai', 'Analysis error: ' + error.message);
+            }
+            
+            setButtonLoading(type === 'hint' ? 'hintBtn' : 'analyzeBtn', false);
+        }
+
+        function addMessage(sender, message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message fade-in`;
+            messageDiv.innerHTML = message.replace(/\n/g, '<br>');
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Chat functionality
+        document.getElementById('sendBtn').addEventListener('click', async () => {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            addMessage('user', message);
+            input.value = '';
+            
+            setButtonLoading('sendBtn', true);
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: message,
+                        profile: candidateProfile
+                    })
+                });
+                const result = await response.json();
+                addMessage('ai', result.response);
+            } catch (error) {
+                addMessage('ai', 'Sorry, I encountered an error. Please try again.');
+            }
+            
+            setButtonLoading('sendBtn', false);
+        });
+
+        // Enter key for chat
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('sendBtn').click();
+            }
+        });
+
+        // Utility functions
+        function updateProblem(problem) {
+            document.getElementById('problemTitle').innerHTML = `<i class="fas fa-code me-2"></i>${problem.title}`;
+            document.getElementById('problemDescription').textContent = problem.description;
+            if (problem.template) {
+                editor.setValue(problem.template);
+            }
+        }
+
+        function updateProgress(progress) {
+            interviewProgress = progress;
+            document.getElementById('progressIndicator').style.display = 'inline-block';
+            document.getElementById('currentQ').textContent = progress.current;
+            document.getElementById('totalQ').textContent = progress.total;
+            
+            const percentage = (progress.current / progress.total) * 100;
+            document.getElementById('interviewProgress').style.width = percentage + '%';
+        }
+
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            new bootstrap.Modal(document.getElementById('loadingModal')).show();
+        }
+
+        function hideLoading() {
+            bootstrap.Modal.getInstance(document.getElementById('loadingModal'))?.hide();
+        }
+
+        function setButtonLoading(buttonId, loading) {
+            const button = document.getElementById(buttonId);
+            const originalHTML = button.innerHTML;
+            
+            if (loading) {
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner-border spinner-border-custom me-2"></span>Processing...';
+            } else {
+                button.disabled = false;
+                button.innerHTML = originalHTML;
+            }
+        }
+
+        function showAlert(message, type) {
+            // Simple alert for now - could be enhanced with toast notifications
+            const alertClass = type === 'success' ? 'alert-success' : 
+                              type === 'warning' ? 'alert-warning' : 'alert-danger';
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // Welcome message
+                // Welcome message
+        setTimeout(() => {
+            addMessage('ai', '👋 Welcome to CodeSage! I\'m your AI technical interviewer powered by Google Gemini. Upload your resume for a personalized interview experience, or start coding right away!');
+        }, 1000);
+
+        // =============================================
+        // VOICE INTERVIEW SYSTEM (NEW)
+        // =============================================
+        let voiceInterview = {
+            active: false,
+            recognition: null,
+            synthesis: window.speechSynthesis
+        };
+
+        // Initialize voice interview buttons
+        document.getElementById('startVoiceBtn').addEventListener('click', () => {
+            startVoiceInterview();
+        });
+
+        document.getElementById('stopVoiceBtn').addEventListener('click', () => {
+            stopVoiceInterview();
+        });
+
+        function startVoiceInterview() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                showAlert('Voice recognition not supported. Use Chrome or Edge browser.', 'warning');
+                return;
+            }
+            
+            voiceInterview.recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            voiceInterview.recognition.continuous = true;
+            voiceInterview.recognition.interimResults = false;
+            voiceInterview.recognition.lang = 'en-US';
+            
+            voiceInterview.recognition.onstart = () => {
+                voiceInterview.active = true;
+                document.getElementById('startVoiceBtn').style.display = 'none';
+                document.getElementById('stopVoiceBtn').style.display = 'inline-block';
+                document.getElementById('voiceStatus').style.display = 'block';
+                
+                // AI speaks welcome message
+                speakAI("Hi! I'm ready for our voice interview. Start coding and think aloud - I'll listen and help guide you!");
+                addMessage('ai', '🎤 Voice interview started! Speak your thoughts while coding.');
+            };
+            
+            voiceInterview.recognition.onresult = (event) => {
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        const transcript = event.results[i][0].transcript.trim();
+                        if (transcript.length > 0) {
+                            handleVoiceInput(transcript);
+                        }
+                    }
+                }
+            };
+            
+            voiceInterview.recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                if (event.error === 'no-speech') {
+                    // Restart recognition automatically
+                    setTimeout(() => {
+                        if (voiceInterview.active) {
+                            voiceInterview.recognition.start();
+                        }
+                    }, 1000);
+                }
+            };
+            
+            voiceInterview.recognition.onend = () => {
+                // Restart recognition if still active
+                if (voiceInterview.active) {
+                    setTimeout(() => {
+                        voiceInterview.recognition.start();
+                    }, 100);
+                }
+            };
+            
+            voiceInterview.recognition.start();
+        }
+
+        function stopVoiceInterview() {
+            voiceInterview.active = false;
+            if (voiceInterview.recognition) {
+                voiceInterview.recognition.stop();
+            }
+            
+            document.getElementById('startVoiceBtn').style.display = 'inline-block';
+            document.getElementById('stopVoiceBtn').style.display = 'none';
+            document.getElementById('voiceStatus').style.display = 'none';
+            
+            speakAI("Voice interview ended. You can continue typing or restart voice anytime!");
+            addMessage('ai', '🎤 Voice interview stopped. Chat is still available!');
+        }
+
+        async function handleVoiceInput(speech) {
+            console.log('Voice input:', speech);
+            
+            // Show what user said
+            addMessage('user', `🎤 "${speech}"`);
+            
+            try {
+                const response = await fetch('/api/voice-chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        speech: speech,
+                        code: editor.getValue(),
+                        profile: candidateProfile
+                    })
+                });
+                
+                const result = await response.json();
+                
+                // Add AI response to chat
+                addMessage('ai', result.response);
+                
+                // Speak the response
+                speakAI(result.response);
+                
+            } catch (error) {
+                console.error('Voice chat error:', error);
+                addMessage('ai', 'I had trouble processing that. Can you try again?');
+                speakAI("I'm having trouble processing that. Can you try again?");
+            }
+        }
+
+        function speakAI(text) {
+    console.log('🔊 Attempting to speak:', text);
+    
+    // Stop any current speech
+    voiceInterview.synthesis.cancel();
+    
+    // Clean text for speech (remove markdown, emojis, etc.)
+    const cleanText = text
+        .replace(/[🎤🔊💡✅❌⚠️🚀🎯💪🏆🎉]/g, '') // Remove emojis
+        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
+        .replace(/`(.*?)`/g, '$1') // Remove code backticks
+        .replace(/\n/g, ' ') // Replace newlines with spaces
+        .trim();
+    
+    if (!cleanText) {
+        console.log('❌ No text to speak');
+        return;
+    }
+    
+    // Create utterance
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 0.85;  // Slightly slower for clarity
+    utterance.pitch = 1.0;
+    utterance.volume = 0.9;
+    
+    // Get available voices and select a good one
+    const voices = voiceInterview.synthesis.getVoices();
+    console.log('Available voices:', voices.length);
+    
+    // Try to find the best voice
+    const preferredVoice = voices.find(voice => 
+        (voice.name.includes('Google') && voice.lang.startsWith('en')) ||
+        (voice.name.includes('Microsoft') && voice.lang.startsWith('en')) ||
+        (voice.name.includes('Samantha')) ||
+        (voice.name.includes('Alex'))
+    ) || voices.find(voice => voice.lang.startsWith('en')) || voices[0];
+    
+    if (preferredVoice) {
+        utterance.voice = preferredVoice;
+        console.log('🎙️ Using voice:', preferredVoice.name);
+    }
+    
+    // Event handlers for debugging
+    utterance.onstart = () => {
+        console.log('🔊 Speech started');
+    };
+    
+    utterance.onend = () => {
+        console.log('🔊 Speech ended');
+    };
+    
+    utterance.onerror = (event) => {
+        console.error('🔊 Speech error:', event.error);
+        // Show visual feedback if speech fails
+        addMessage('system', '🔊 (Audio playback failed - check browser settings)');
+    };
+    
+    // Speak the text
+    try {
+        voiceInterview.synthesis.speak(utterance);
+        console.log('✅ Speech synthesis started');
+    } catch (error) {
+        console.error('❌ Speech synthesis error:', error);
+    }
+}
+// =============================================
+// COPY/PASTE ANTI-CHEAT SYSTEM (SUPER SIMPLE)
+// =============================================
+let copyPasteViolations = 0;
+const maxCopyPaste = 3;
+
+// Detect copy attempts
+document.addEventListener('copy', function(e) {
+    copyPasteViolations++;
+    console.log('🚨 Copy detected! Count:', copyPasteViolations);
+    
+    // Show warning
+    if (typeof window.addMessage === 'function') {
+        window.addMessage('system', `🚨 Copy detected! Warning ${copyPasteViolations}/${maxCopyPaste}`);
+    }
+    
+    showCopyPasteModal('Copy', copyPasteViolations);
+    
+    if (copyPasteViolations >= maxCopyPaste) {
+        terminateForCopyPaste();
+    }
+});
+
+// Detect paste attempts  
+document.addEventListener('paste', function(e) {
+    copyPasteViolations++;
+    console.log('🚨 Paste detected! Count:', copyPasteViolations);
+    
+    // Show warning
+    if (typeof window.addMessage === 'function') {
+        window.addMessage('system', `🚨 Paste detected! Warning ${copyPasteViolations}/${maxCopyPaste}`);
+    }
+    
+    showCopyPasteModal('Paste', copyPasteViolations);
+    
+    if (copyPasteViolations >= maxCopyPaste) {
+        terminateForCopyPaste();
+    }
+});
+
+function showCopyPasteModal(action, count) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade show';
+    modal.style.display = 'block';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
+    
+    modal.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-warning text-dark">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">
+                        <i class="fas fa-clipboard me-2"></i>
+                        ${action} Detection Alert
+                    </h5>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem;"></i>
+                    </div>
+                    <h4>${action} Operation Detected</h4>
+                    <p>Copy/paste operations are monitored during interviews.</p>
+                    <div class="alert alert-danger">
+                        <strong>Warning ${count} of ${maxCopyPaste}</strong><br>
+                        <small>${maxCopyPaste - count} warnings remaining before termination</small>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <button type="button" class="btn btn-primary" onclick="this.closest('.modal').remove()">
+                        I Understand
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Auto-close after 3 seconds
+    setTimeout(() => {
+        if (modal.parentNode) {
+            modal.remove();
+        }
+    }, 3000);
+}
+
+function terminateForCopyPaste() {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade show';
+    modal.style.display = 'block';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.9)';
+    
+    modal.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-danger text-white">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">
+                        <i class="fas fa-ban me-2"></i>
+                        Interview Terminated
+                    </h5>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-clipboard" style="font-size: 4rem;"></i>
+                    </div>
+                    <h4>Excessive Copy/Paste Activity</h4>
+                    <p>The interview has been terminated due to multiple copy/paste violations.</p>
+                    <div class="alert alert-warning text-dark">
+                        <strong>Total Violations: ${maxCopyPaste}</strong><br>
+                        <small>Copy/paste monitoring ensures interview integrity</small>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <button type="button" class="btn btn-light text-dark" onclick="window.close()">
+                        Close Interview
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Stop voice interview if active
+    if (window.voiceInterview && window.voiceInterview.active) {
+        window.stopVoiceInterview();
+    }
+}
+
+console.log('✅ Copy/Paste Anti-Cheat loaded');
+
+
+        // =============================================
+        // ANTI-CHEAT SYSTEM (ENTERPRISE SECURITY)
+        // =============================================
+        let antiCheat = {
+            strikes: 0,
+            maxStrikes: 3,
+            isActive: false,
+            violations: [],
+            warningModal: null,
+            terminatedModal: null
+        };
+
+        // Initialize anti-cheat system
+        function initAntiCheat() {
+            antiCheat.warningModal = new bootstrap.Modal(document.getElementById('cheatWarningModal'));
+            antiCheat.terminatedModal = new bootstrap.Modal(document.getElementById('terminatedModal'));
+            
+            // Start monitoring when interview begins
+            document.addEventListener('DOMContentLoaded', () => {
+                startAntiCheatMonitoring();
+            });
+        }
+
+        function startAntiCheatMonitoring() {
+            antiCheat.isActive = true;
+            console.log('🛡️ Anti-cheat monitoring started');
+            
+            // Window focus/blur detection
+            window.addEventListener('blur', handleWindowSwitch);
+            window.addEventListener('focus', handleWindowReturn);
+            
+            // Page visibility API (more reliable)
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            
+            // Keyboard shortcuts detection
+            document.addEventListener('keydown', handleKeyboardShortcuts);
+            
+            // Mouse leave detection (additional security)
+            document.addEventListener('mouseleave', handleMouseLeave);
+            
+            addMessage('system', '🛡️ Interview security monitoring active. Stay in this window at all times.');
+        }
+
+        function handleWindowSwitch() {
+            if (!antiCheat.isActive) return;
+            
+            logViolation('window_blur', 'User switched away from interview window');
+            triggerViolationWarning('Window Switch Detected', 'You switched away from the interview window.');
+        }
+
+        function handleVisibilityChange() {
+            if (!antiCheat.isActive) return;
+            
+            if (document.hidden) {
+                logViolation('tab_switch', 'User switched to different tab or minimized window');
+                triggerViolationWarning('Tab Switch Detected', 'You switched to a different tab or minimized the window.');
+            }
+        }
+
+        function handleKeyboardShortcuts(event) {
+            if (!antiCheat.isActive) return;
+            
+            // Detect Alt+Tab, Cmd+Tab, Ctrl+Tab, etc.
+            if ((event.altKey && event.key === 'Tab') ||
+                (event.metaKey && event.key === 'Tab') ||
+                (event.ctrlKey && event.key === 'Tab')) {
+                
+                event.preventDefault();
+                logViolation('keyboard_shortcut', `Keyboard shortcut detected: ${event.key} with modifiers`);
+                triggerViolationWarning('Forbidden Shortcut', 'Window switching shortcuts are not allowed during the interview.');
+            }
+        }
+
+        function handleMouseLeave() {
+            if (!antiCheat.isActive) return;
+            
+            // Only trigger if mouse leaves the entire document area
+            setTimeout(() => {
+                if (!document.hasFocus()) {
+                    logViolation('mouse_leave', 'Mouse left interview area and window lost focus');
+                }
+            }, 100);
+        }
+
+        function handleWindowReturn() {
+            if (!antiCheat.isActive) return;
+            console.log('🛡️ User returned to interview window');
+        }
+
+        function logViolation(type, description) {
+            const violation = {
+                type: type,
+                description: description,
+                timestamp: new Date().toISOString(),
+                currentCode: editor ? editor.getValue() : 'No code',
+                strikeNumber: antiCheat.strikes + 1
+            };
+            
+            antiCheat.violations.push(violation);
+            console.log('🚨 Security violation logged:', violation);
+            
+            // Send to backend for logging
+            fetch('/api/log-violation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(violation)
+            }).catch(err => console.log('Failed to log violation to server'));
+        }
+
+        function triggerViolationWarning(title, message) {
+            antiCheat.strikes++;
+            
+            // Update modal content
+            document.getElementById('warningTitle').textContent = title;
+            document.getElementById('warningMessage').textContent = message;
+            document.getElementById('currentStrike').textContent = antiCheat.strikes;
+            
+            if (antiCheat.strikes >= antiCheat.maxStrikes) {
+                terminateInterview();
+                return;
+            }
+            
+            // Show warning modal with countdown
+            antiCheat.warningModal.show();
+            startWarningCountdown();
+            
+            // Add violation message to chat
+            addMessage('system', `🚨 Security Warning: ${title} (Strike ${antiCheat.strikes}/${antiCheat.maxStrikes})`);
+            
+            // Voice warning if voice is active
+            if (voiceInterview.active) {
+                speakAI(`Security warning! You have ${antiCheat.maxStrikes - antiCheat.strikes} strikes remaining.`);
+            }
+        }
+
+        function startWarningCountdown() {
+            let countdown = 5;
+            const countdownEl = document.getElementById('countdown');
+            
+            const timer = setInterval(() => {
+                countdownEl.textContent = countdown;
+                countdown--;
+                
+                if (countdown < 0) {
+                    clearInterval(timer);
+                    antiCheat.warningModal.hide();
+                }
+            }, 1000);
+        }
+
+        function terminateInterview() {
+            antiCheat.isActive = false;
+            
+            // Show termination modal
+            antiCheat.terminatedModal.show();
+            
+            // Stop voice interview if active
+            if (voiceInterview.active) {
+                stopVoiceInterview();
+            }
+            
+            // Add final message
+            addMessage('system', '🚫 Interview terminated due to security violations. Final report generated.');
+            
+            // Send final violation report
+            fetch('/api/terminate-interview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    reason: 'security_violations',
+                    strikes: antiCheat.strikes,
+                    violations: antiCheat.violations,
+                    finalCode: editor ? editor.getValue() : 'No code'
+                })
+            });
+            
+            console.log('🚫 Interview terminated due to security violations');
+        }
+
+        // Initialize anti-cheat when page loads
+        initAntiCheat();
+
+    
+ </script>
+ <!-- ANTI-CHEAT SECURITY MODALS -->
+    <!-- All your modal content -->
+
+    <!-- Anti-Cheat System Script -->
+    <script src="/static/ai-proctoring.js"></script>
+</body>
+</html>
+
+
